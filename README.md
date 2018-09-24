@@ -1,2 +1,2 @@
 # davezap
-simple game for javascript inspired by proto space invader game
+simple game for javascript inspired by a proto space invader game
