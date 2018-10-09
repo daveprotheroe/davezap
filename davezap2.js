@@ -19,7 +19,8 @@ let bug = {
     x : 0.5 * canvas.width,
     width : 0.05 * canvas.width,
     height : 0.05 * canvas.height,
-    y : 0.1 * canvas.height
+    y : 0.1 * canvas.height,
+    alive : true
 }; 
 
 var ctx = canvas.getContext("2d");
@@ -70,9 +71,18 @@ function drawLaser() {
         ctx.lineTo(canon.x,canon.y);
         ctx.strokeStyle = 'red';
         ctx.lineWidth = 3;
-        ctx.stroke();
-    
+        ctx.stroke();   
 }
+//My attempt to do bug drop upon death and respawn
+function isBugHit() {    
+    if ((spacekeydown ==true) && ((canon.x >= bug.x) && (canon.x <= (bug.x + bug.width)))){
+        return true;
+    }  else {
+        return false
+    }
+
+}
+
 function drawBug() {
     if ((framecount % bugSpeed) == 0){
         bug.x = Math.random() * (canvas.width - bug.width);
@@ -88,15 +98,25 @@ function gameLoop(timestamp) {
     if(rightkeydown == true && canon.x < (canvas.width - canon.width * 0.5)) {
         canon.x += 8;
     }
-    
-if (spacekeydown ==true && canon.x >= bug.x && (canon.x <= bug.x + bug.width)) console.log ("zapped");
+
+
 
     cleanScreen();
-    drawBug();
+
+    if (bug.alive) {
+        drawBug();
+    }
     drawCanon();
     if (spacekeydown == true && (framecount % 3) == 0){
-        drawLaser();  
+        drawLaser(); 
+        if (isBugHit()) {
+            bug.alive = false;
+            console.log("zapped");
+        }   else {
+            bug.y +=(0.1 * canvas.height);
+        } 
     }
+
       
     window.requestAnimationFrame(gameLoop); 
 }
