@@ -7,6 +7,7 @@ let bugDelay = 120;
 let score = 0;
 let gameState = 0;
 let spacewaslifted = false;
+let lives = 3;
 
 // This is the function canon.
 const canvas = document.getElementById ("canvas1"); 
@@ -37,6 +38,8 @@ function init(){
     bugDelay = 120;
     score = 0;
     spacewaslifted = false;
+    // Something is broken here
+    lives == 3;
 
         canon = { 
             x : 0.5 * canvas.width,
@@ -84,12 +87,52 @@ function keyuphandler (event) {
     } 
 }
 
+function welcomeText() {
+    ctx.font = '20pt calibri';
+    ctx.textAlign = 'center';
+    ctx.fillText("Welcome to Davezap!",canvas.width * 0.5, canvas.height * 0.2);
+    ctx.font = '12pt calibri';
+    ctx.fillText("The object of the game is to use your",canvas.width * 0.5, canvas.height * 0.3);
+    ctx.fillText("laser gun to zap the decending bug",canvas.width * 0.5, canvas.height * 0.35);
+    ctx.fillText("before it lands or bombs you.",canvas.width * 0.5, canvas.height * 0.40);
+    ctx.fillText("Your score increases every time you",canvas.width * 0.5, canvas.height * 0.45);
+    ctx.fillText("zap the bug, with more points being",canvas.width * 0.5, canvas.height * 0.5);
+    ctx.fillText("given the lower the bug is; it will be",canvas.width * 0.5, canvas.height * 0.55);
+    ctx.fillText("displayed when you are killed.",canvas.width * 0.5, canvas.height * 0.6);
+    ctx.fillText("Press SPACE to start the game",canvas.width * 0.5, canvas.height * 0.8);
+}
+
+function deadText() {
+    ctx.font = '20pt calibri';
+    ctx.textAlign = 'center';
+    ctx.fillText("YOU ARE DEAD!",canvas.width * 0.5, canvas.height * 0.2);
+    ctx.font = '12pt calibri';
+    ctx.fillText("Your score is",canvas.width * 0.5, canvas.height * 0.35);
+    ctx.fillText("The high score is",canvas.width * 0.5, canvas.height * 0.5);
+    ctx.fillText("Press SPACE to start the game",canvas.width * 0.5, canvas.height * 0.8);
+}
+
 function cleanScreen() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 function drawScore() {
-    ctx.fillText (score * 10,0,10);
+    if (gameState == 1){
+    ctx.font = '20pt calibri';
+    ctx.textAlign = 'left';
+    ctx.fillText("Score",canvas.width * 0.01, canvas.height * 0.05);
+    ctx.fillText ((score * 10).toFixed(0),canvas.width * 0.07,canvas.height * 0.05);
+    }
+     else {
+        ctx.font = '20pt calibri';
+        ctx.textAlign = 'centre';
+        ctx.fillText ((score * 10).toFixed(0),canvas.width * 0.5,canvas.height * 0.4);
+    }
+}
+
+function drawLives() {
+    ctx.fillText("Lives",canvas.width * 0.01, canvas.height * 0.08);
+    ctx.fillText ((lives),canvas.width * 0.07,canvas.height * 0.08);
 }
 
 function drawCanon() {
@@ -128,7 +171,7 @@ function welcome() {
         gameState = 1;
         init();
     }
-
+    welcomeText();
 }
 
 function playing() {
@@ -141,7 +184,13 @@ function playing() {
         canon.x += 8;
     }
     if (bug.y >= canon.y) {
-        gameState = 2;
+        lives = lives - 1;
+        if (lives == 0){
+            gameState = 2;
+        }
+        else {
+            init();
+            }
     }
     cleanScreen();
 
@@ -163,6 +212,7 @@ function playing() {
     }
 
     drawScore();
+    drawLives();
 
 }
 
@@ -176,6 +226,8 @@ function dead() {
         init();
         spacewaslifted = false;
     }
+    deadText();
+    drawScore();
 }
 
 function gameLoop(timestamp) {
