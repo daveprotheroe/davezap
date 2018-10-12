@@ -5,7 +5,7 @@ let spacekeydown = false;
 let framecount = 0;
 let bugDelay = 120;
 let score = 0;
-let highScore = 0;
+let highScore = localStorage.getItem("highScore");;
 let gameState = 0;
 let spacewaslifted = false;
 let lives = 3;
@@ -174,7 +174,6 @@ function welcome() {
     if (spacekeydown == true) {
         gameState = 1;
         initGame();
-        
     }
     welcomeText();
 }
@@ -238,6 +237,7 @@ function dead() {
     deadText();
     if (score > highScore) {
         highScore = score;
+        localStorage.setItem("highScore", highScore);
     }
     drawScore();
 }
