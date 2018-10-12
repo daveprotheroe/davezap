@@ -1,24 +1,26 @@
-
+// All global variables
 let leftkeydown = false;
 let rightkeydown = false;
 let spacekeydown = false;
 let framecount = 0;
 let bugDelay = 120;
 let score = 0;
+let highScore = 0;
 let gameState = 0;
 let spacewaslifted = false;
 let lives = 3;
-
-// This is the function canon.
 const canvas = document.getElementById ("canvas1"); 
+let ctx = canvas.getContext("2d");
 
+
+// The canon object with all it's parameters
 let canon = { 
      x : 0.5 * canvas.width,
      width : 0.05 * canvas.width,
      height : 0.025 * canvas.height,
      y : 0.9 * canvas.height
 }; 
-
+// The bug object with all it's parameters
 let bug = { 
     x : 0.5 * canvas.width,
     width : 0.05 * canvas.width,
@@ -27,38 +29,39 @@ let bug = {
     alive : true
 }; 
 
-var ctx = canvas.getContext("2d");
-document.addEventListener("keydown", keydownhandler);
-
-function init(){
+// Initalisation paramenters to load in each gamestate set as a function to call later.
+function initRound(){
     leftkeydown = false;
     rightkeydown = false;
     spacekeydown = false;
     framecount = 0;
     bugDelay = 120;
-    score = 0;
     spacewaslifted = false;
-    // Something is broken here
-    lives == 3;
 
-        canon = { 
-            x : 0.5 * canvas.width,
-            width : 0.05 * canvas.width,
-            height : 0.025 * canvas.height,
-            y : 0.9 * canvas.height
+// Remove the LET part here as it would reassign the variable instead of using the parameters if you did.
+    canon = { 
+        x : 0.5 * canvas.width,
+        width : 0.05 * canvas.width,
+        height : 0.025 * canvas.height,
+        y : 0.9 * canvas.height
     }; 
-
+// Remove the LET part here as it would reassign the variable instead of using the parameters if you did.
     bug = { 
         x : 0.5 * canvas.width,
         width : 0.05 * canvas.width,
         height : 0.05 * canvas.height,
         y : 0.1 * canvas.height,
         alive : true
-        }; 
+    }; 
+}
 
-    }
-
+function initGame(){
+    lives = 3;
+    score = 0;
+    initRound();
+}
 // a handler to rember the state of the cursor keys
+document.addEventListener("keydown", keydownhandler);
 function keydownhandler (event) {
     if (event.keyCode == 37) {
         leftkeydown = true;
@@ -86,7 +89,7 @@ function keyuphandler (event) {
         spacekeydown = false;
     } 
 }
-
+// This fucntion loads all the text into the welcome screen.
 function welcomeText() {
     ctx.font = '20pt calibri';
     ctx.textAlign = 'center';
@@ -101,7 +104,7 @@ function welcomeText() {
     ctx.fillText("displayed when you are killed.",canvas.width * 0.5, canvas.height * 0.6);
     ctx.fillText("Press SPACE to start the game",canvas.width * 0.5, canvas.height * 0.8);
 }
-
+// This function loads all the text into the Dead screen.
 function deadText() {
     ctx.font = '20pt calibri';
     ctx.textAlign = 'center';
@@ -111,11 +114,11 @@ function deadText() {
     ctx.fillText("The high score is",canvas.width * 0.5, canvas.height * 0.5);
     ctx.fillText("Press SPACE to start the game",canvas.width * 0.5, canvas.height * 0.8);
 }
-
+// This function is to clear the screen after each stroke of a drawing has been done, otherwise each refresh would leave trails.
 function cleanScreen() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
-
+// This function draws the score in the top left corner.
 function drawScore() {
     if (gameState == 1){
     ctx.font = '20pt calibri';
@@ -127,8 +130,10 @@ function drawScore() {
         ctx.font = '20pt calibri';
         ctx.textAlign = 'centre';
         ctx.fillText ((score * 10).toFixed(0),canvas.width * 0.5,canvas.height * 0.4);
+        ctx.fillText ((highScore * 10).toFixed(0),canvas.width * 0.5,canvas.height * 0.6);
     }
 }
+
 
 function drawLives() {
     ctx.fillText("Lives",canvas.width * 0.01, canvas.height * 0.08);
@@ -154,9 +159,8 @@ function isBugHit() {
     if ((spacekeydown ==true) && ((canon.x >= bug.x) && (canon.x <= (bug.x + bug.width)))){
         return true;
     }  else {
-        return false
+        return false;
     }
-
 }
 
 function drawBug() {
@@ -169,12 +173,16 @@ function drawBug() {
 function welcome() {
     if (spacekeydown == true) {
         gameState = 1;
-        init();
+        initGame();
+        
     }
     welcomeText();
 }
 
 function playing() {
+    //The black background of the canvas isn't working
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     framecount +=1;
     if(leftkeydown == true && canon.x >(canon.width * 0.5)) {
         canon.x -=8;
@@ -189,7 +197,7 @@ function playing() {
             gameState = 2;
         }
         else {
-            init();
+            initRound();
             }
     }
     cleanScreen();
@@ -213,7 +221,6 @@ function playing() {
 
     drawScore();
     drawLives();
-
 }
 
 function dead() {
@@ -223,14 +230,20 @@ function dead() {
     }
     if (spacekeydown == true && spacewaslifted==true) {
         gameState = 1;
-        init();
+        initGame();
+
         spacewaslifted = false;
     }
+
     deadText();
+    if (score > highScore) {
+        highScore = score;
+    }
     drawScore();
 }
 
 function gameLoop(timestamp) {
+    //main UI state machine
     if (gameState == 0) {
         welcome();
     }
