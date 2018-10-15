@@ -55,6 +55,18 @@ function initRound(){
     }; 
 }
 
+function bugSound(){
+    let context = new (window.AudioContext || window.webkitAudioContext)();
+    let oscillator = context.createOscillator();
+    let now = context.currentTime;
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 440;
+    oscillator.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.5);
+    //oscillator.disconnect(context.destination);
+}
+
 function initGame(){
     lives = 3;
     score = 0;
@@ -89,6 +101,8 @@ function keyuphandler (event) {
         spacekeydown = false;
     } 
 }
+
+
 // This fucntion loads all the text into the welcome screen.
 function welcomeText() {
     ctx.font = '20pt calibri';
@@ -163,10 +177,16 @@ function isBugHit() {
     }
 }
 
+function bugDrop(){
+    bug.y +=(0.03 * canvas.height);
+    bugSound();
+}
+
 function drawBug() {
     if ((framecount % bugDelay) == 0){
         bug.x = Math.random() * (canvas.width - bug.width);
     }
+    
     ctx.fillRect (bug.x, bug.y, bug.width, bug.height);
 }
 
@@ -214,7 +234,7 @@ function playing() {
             console.log("zapped");
             bugDelay = (bugDelay- 5);
         }   else {
-            bug.y +=(0.03 * canvas.height);
+            bugDrop();
         } 
     }
 
@@ -257,3 +277,4 @@ function gameLoop(timestamp) {
 }
 
 window.requestAnimationFrame(gameLoop);
+
