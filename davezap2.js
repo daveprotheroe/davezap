@@ -55,7 +55,7 @@ function initRound(){
     }; 
 }
 
-function bugSound(){
+//function bugSound(){
     let context = new (window.AudioContext || window.webkitAudioContext)();
     let oscillator = context.createOscillator();
     let now = context.currentTime;
