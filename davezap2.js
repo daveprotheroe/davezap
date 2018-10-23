@@ -4,6 +4,8 @@ let rightkeydown = false;
 let spacekeydown = false;
 let framecount = 0;
 let bugDelay = 120;
+//let bombDelay = 120;
+//let soundDelay = 150;
 let score = 0;
 let highScore = localStorage.getItem("highScore");;
 let gameState = 0;
@@ -28,6 +30,12 @@ let bug = {
     y : 0.1 * canvas.height,
     alive : true
 }; 
+
+//let bomb = {
+    //x : bug.x
+    //y : bug.y
+
+//}
 
 // Initalisation paramenters to load in each gamestate set as a function to call later.
 function initRound(){
@@ -56,14 +64,14 @@ function initRound(){
 }
 
 //function bugSound(){
-    let context = new (window.AudioContext || window.webkitAudioContext)();
-    let oscillator = context.createOscillator();
-    let now = context.currentTime;
-    oscillator.type = 'sine';
-    oscillator.frequency.value = 440;
-    oscillator.connect(context.destination);
-    oscillator.start(now);
-    oscillator.stop(now + 0.5);
+    //let context = new (window.AudioContext || window.webkitAudioContext)();
+    //let oscillator = context.createOscillator();
+    //let now = context.currentTime;
+    //oscillator.type = 'sine';
+    //oscillator.frequency.value = 440;
+    //oscillator.connect(context.destination);
+    //oscillator.start(now);
+    //oscillator.stop(now + 0.1);
     //oscillator.disconnect(context.destination);
 }
 
@@ -179,7 +187,10 @@ function isBugHit() {
 
 function bugDrop(){
     bug.y +=(0.03 * canvas.height);
-    bugSound();
+    // I need a loop here for the sound with a timing reference for when to do it. 
+
+    //while (isBugHit = false) &&  if ((framecount % soundDelay) == 0)
+    //bugSound();
 }
 
 function drawBug() {
@@ -189,6 +200,15 @@ function drawBug() {
     
     ctx.fillRect (bug.x, bug.y, bug.width, bug.height);
 }
+// the math.random inside here needs to be a delay on when to drop the bomb not it's position. Does it only drop 1 bomb between succsefful hits? 
+//function drawBomb(){
+ //   if ((framecount % bombDelay) == 0){
+        //bug.x = Math.random() * (canvas.width - bug.width);
+   // }
+    
+   // ctx.fillRect (bomb.x, bomb.y, bug.width, bug.height);
+
+//}
 
 function welcome() {
     if (spacekeydown == true) {
