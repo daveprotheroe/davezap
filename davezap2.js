@@ -4,8 +4,8 @@ let rightkeydown = false;
 let spacekeydown = false;
 let framecount = 0;
 let bugDelay = 120;
-//let bombDelay = 120;
-//let soundDelay = 150;
+let bombDelay = 120;
+let soundDelay = 150;
 let score = 0;
 let highScore = localStorage.getItem("highScore");;
 let gameState = 0;
@@ -14,28 +14,32 @@ let lives = 3;
 const canvas = document.getElementById ("canvas1"); 
 let ctx = canvas.getContext("2d");
 
-
 // The canon object with all it's parameters
 let canon = { 
      x : 0.5 * canvas.width,
      width : 0.05 * canvas.width,
      height : 0.025 * canvas.height,
-     y : 0.9 * canvas.height
+     y : 0.9 * canvas.height,
+     laserFrequency : 200,
+     CanonFrequency : 200
 }; 
 // The bug object with all it's parameters
 let bug = { 
     x : 0.5 * canvas.width,
-    width : 0.05 * canvas.width,
-    height : 0.05 * canvas.height,
+    width : 0.01 * canvas.width,
+    height : 0.01 * canvas.height,
     y : 0.1 * canvas.height,
-    alive : true
+    frequency : 250
 }; 
 
-//let bomb = {
-    //x : bug.x
-    //y : bug.y
-
-//}
+let bomb = {
+    x : bug.x,
+    y : bug.y,
+    width : 0.01 * canvas.width,
+    height : 0.15 * canvas.height,
+    spawned : false,
+    bombFrequency : 200
+};
 
 // Initalisation paramenters to load in each gamestate set as a function to call later.
 function initRound(){
@@ -46,33 +50,80 @@ function initRound(){
     bugDelay = 120;
     spacewaslifted = false;
 
+
 // Remove the LET part here as it would reassign the variable instead of using the parameters if you did.
     canon = { 
         x : 0.5 * canvas.width,
         width : 0.05 * canvas.width,
         height : 0.025 * canvas.height,
-        y : 0.9 * canvas.height
+        y : 0.9 * canvas.height,
+        laserFrequency : 1200,
+        CanonFrequency : 200
     }; 
 // Remove the LET part here as it would reassign the variable instead of using the parameters if you did.
     bug = { 
-        x : 0.5 * canvas.width,
-        width : 0.05 * canvas.width,
-        height : 0.05 * canvas.height,
+        x : bug.x,
+        width : 0.01 * canvas.width,
+        height : 0.01 * canvas.height,
         y : 0.1 * canvas.height,
-        alive : true
+        alive : true,
+        frequency : 250
     }; 
+// Remove the LET part here as it would reassign the variable instead of using the parameters if you did. 
+    bomb = {
+        x : bug.x,
+        y : bug.y,
+        width : 0.01 * canvas.width,
+        height : 0.15 * canvas.height,
+        spawned : false,
+        bombFrequency : 200
+    }; 
+};
+
+function bugSound(){
+    let context = new (window.AudioContext || window.webkitAudioContext)();
+    let oscillator = context.createOscillator();
+    let now = context.currentTime;
+    oscillator.type = 'sine';
+    oscillator.frequency.value = bug.frequency;
+    oscillator.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.1);
+    //oscillator.disconnect(context.destination);
 }
 
-//function bugSound(){
-    //let context = new (window.AudioContext || window.webkitAudioContext)();
-    //let oscillator = context.createOscillator();
-    //let now = context.currentTime;
-    //oscillator.type = 'sine';
-    //oscillator.frequency.value = 440;
-    //oscillator.connect(context.destination);
-    //oscillator.start(now);
-    //oscillator.stop(now + 0.1);
-    //oscillator.disconnect(context.destination);
+function laserSound (){
+    let context = new (window.AudioContext || window.webkitAudioContext)();
+    let oscillator = context.createOscillator();
+    let now = context.currentTime;
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.value = 400;
+    oscillator.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.1);
+}
+
+function bombSound(){
+    // NEED TO CREATE AN EXPONENTIAL RAMP IN PITCH
+    let context = new (window.AudioContext || window.webkitAudioContext)();
+    let oscillator = context.createOscillator();
+    let now = context.currentTime;
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 1000;
+    oscillator.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.1);
+}
+
+function destructionSound(){
+    let context = new (window.AudioContext || window.webkitAudioContext)();
+    let oscillator = context.createOscillator();
+    let now = context.currentTime;
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.value = 200;
+    oscillator.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + 0.02);
 }
 
 function initGame(){
@@ -109,10 +160,14 @@ function keyuphandler (event) {
         spacekeydown = false;
     } 
 }
-
+// This function is to clear the screen after each stroke of a drawing has been done, otherwise each refresh would leave trails.
+function cleanScreen() {
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
 
 // This fucntion loads all the text into the welcome screen.
 function welcomeText() {
+    ctx.strokeStyle = 'white';
     ctx.font = '20pt calibri';
     ctx.textAlign = 'center';
     ctx.fillText("Welcome to Davezap!",canvas.width * 0.5, canvas.height * 0.2);
@@ -136,10 +191,7 @@ function deadText() {
     ctx.fillText("The high score is",canvas.width * 0.5, canvas.height * 0.5);
     ctx.fillText("Press SPACE to start the game",canvas.width * 0.5, canvas.height * 0.8);
 }
-// This function is to clear the screen after each stroke of a drawing has been done, otherwise each refresh would leave trails.
-function cleanScreen() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
+
 // This function draws the score in the top left corner.
 function drawScore() {
     if (gameState == 1){
@@ -155,7 +207,6 @@ function drawScore() {
         ctx.fillText ((highScore * 10).toFixed(0),canvas.width * 0.5,canvas.height * 0.6);
     }
 }
-
 
 function drawLives() {
     ctx.fillText("Lives",canvas.width * 0.01, canvas.height * 0.08);
@@ -175,10 +226,11 @@ function drawLaser() {
         ctx.strokeStyle = 'red';
         ctx.lineWidth = 3;
         ctx.stroke();   
+        laserSound();
 }
 //My attempt to do bug drop upon death and respawn
 function isBugHit() {    
-    if ((spacekeydown ==true) && ((canon.x >= bug.x) && (canon.x <= (bug.x + bug.width)))){
+    if ((spacekeydown ==true) && ((canon.x >= bug.x) && (canon.x <= (bug.x + bug.width + 20)))){
         return true;
     }  else {
         return false;
@@ -187,28 +239,55 @@ function isBugHit() {
 
 function bugDrop(){
     bug.y +=(0.03 * canvas.height);
-    // I need a loop here for the sound with a timing reference for when to do it. 
-
-    //while (isBugHit = false) &&  if ((framecount % soundDelay) == 0)
-    //bugSound();
+    bug.frequency = bug.frequency + 100;
 }
 
 function drawBug() {
     if ((framecount % bugDelay) == 0){
         bug.x = Math.random() * (canvas.width - bug.width);
+        bugSound();
+        if (Math.random() <0.7 && bomb.spawned == false)  {
+            bomb.spawned = true;
+            bomb.x = bug.x;
+            bomb.y = bug.y + bug.height;
+        }
+        
     }
-    
-    ctx.fillRect (bug.x, bug.y, bug.width, bug.height);
+    ctx.fillStyle = 'white';
+    ctx.fillRect (bug.x, bug.y, bug.width, bug.height);  
+    ctx.fillRect (bug.x + 10, bug.y + 10, bug.width, bug.height);
+    ctx.fillRect (bug.x - 10, bug.y + 10, bug.width, bug.height);
+    ctx.fillRect (bug.x + 20, bug.y + 20, bug.width, bug.height);
+    ctx.fillRect (bug.x - 20, bug.y + 20, bug.width, bug.height);
+    ctx.fillRect (bug.x + 20, bug.y + 30, bug.width, bug.height);
+    ctx.fillRect (bug.x - 20, bug.y + 30, bug.width, bug.height);
+    ctx.fillRect (bug.x + 10, bug.y + 40, bug.width, bug.height);
+    ctx.fillRect (bug.x - 10, bug.y + 40, bug.width, bug.height);
+    ctx.fillRect (bug.x + 5, bug.y + 50, bug.width, bug.height);
+    ctx.fillRect (bug.x - 5, bug.y + 50, bug.width, bug.height);
+    ctx.fillRect (bug.x + 15, bug.y + 60, bug.width, bug.height);
+    ctx.fillRect (bug.x - 15, bug.y + 60, bug.width, bug.height);
+    ctx.fillRect (bug.x + 25, bug.y + 70, bug.width, bug.height);
+    ctx.fillRect (bug.x - 25, bug.y + 70, bug.width, bug.height);
+
 }
 // the math.random inside here needs to be a delay on when to drop the bomb not it's position. Does it only drop 1 bomb between succsefful hits? 
-//function drawBomb(){
- //   if ((framecount % bombDelay) == 0){
-        //bug.x = Math.random() * (canvas.width - bug.width);
-   // }
-    
-   // ctx.fillRect (bomb.x, bomb.y, bug.width, bug.height);
+function drawBomb(){
+    if (bomb.spawned) {
+        bomb.y = bomb.y + 8;
+        if (bomb.y > canvas.height){
+            bomb.spawned = false;
+        }
+            if (bomb.x > (canon.x - (canon.width * 0.5)) && (bomb.x < (canon.x + (canon.width * 0.5)))){
+                if (bomb.y > (canon.y - (canon.height * 0.5)) && (bomb.y < (canon.y + (canon.height * 0.5)))) {
+                     killCanon();
+                }
 
-//}
+             }
+        ctx.fillStyle = 'white';     
+        ctx.fillRect (bomb.x, bomb.y, bug.width, bug.height);
+    }
+}
 
 function welcome() {
     if (spacekeydown == true) {
@@ -216,6 +295,17 @@ function welcome() {
         initGame();
     }
     welcomeText();
+    cleanScreen();
+}
+
+function killCanon() {
+    lives = lives - 1;
+    if (lives == 0){
+        gameState = 2;
+    }
+    else {
+        initRound();
+        }
 }
 
 function playing() {
@@ -231,13 +321,7 @@ function playing() {
         canon.x += 8;
     }
     if (bug.y >= canon.y) {
-        lives = lives - 1;
-        if (lives == 0){
-            gameState = 2;
-        }
-        else {
-            initRound();
-            }
+        killCanon();
     }
     cleanScreen();
 
@@ -255,9 +339,10 @@ function playing() {
             bugDelay = (bugDelay- 5);
         }   else {
             bugDrop();
+            
         } 
     }
-
+    drawBomb();
     drawScore();
     drawLives();
 }
@@ -278,8 +363,9 @@ function dead() {
     if (score > highScore) {
         highScore = score;
         localStorage.setItem("highScore", highScore);
-    }
+        cleanScreen();    }
     drawScore();
+
 }
 
 function gameLoop(timestamp) {
@@ -297,4 +383,3 @@ function gameLoop(timestamp) {
 }
 
 window.requestAnimationFrame(gameLoop);
-
