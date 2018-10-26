@@ -13,13 +13,14 @@ let spacewaslifted = false;
 let lives = 3;
 const canvas = document.getElementById ("canvas1"); 
 let ctx = canvas.getContext("2d");
-let windowYpos = 0;
+let windowYPos = 0;
+let aspectRatio = canvas.width / canvas.height;
 
 // The canon object with all it's parameters
 let canon = { 
      x : 0.5 * canvas.width,
-     width : 0.05 * canvas.width,
-     height : 0.025 * canvas.height,
+     width : 0.025 * canvas.width,
+     height : 0.0125 * canvas.height,
      y : 0.9 * canvas.height,
      laserFrequency : 100,
      CanonFrequency : 200
@@ -27,20 +28,20 @@ let canon = {
 // The bug object with all it's parameters
 let bug = { 
     x : 0.5 * canvas.width,
-    width : 0.01 * canvas.width,
-    height : 0.01 * canvas.height,
+    width : 0.02 * canvas.width,
+    height : 0.02 * canvas.height * aspectRatio,
     y : 0.1 * canvas.height,
-    frequency : 250
+    frequency : 120
 }; 
 
 let bomb = {
     x : bug.x,
     y : bug.y,
-    width : 0.01 * canvas.width,
-    height : 0.15 * canvas.height,
+    width : 0.02 * canvas.width,
+    height : 0.02 * canvas.height * aspectRatio,
     spawned : false,
     bombFrequency : 80
-};
+}
 
 // Initalisation paramenters to load in each gamestate set as a function to call later.
 function initRound(){
@@ -55,8 +56,8 @@ function initRound(){
 // Remove the LET part here as it would reassign the variable instead of using the parameters if you did.
     canon = { 
         x : 0.5 * canvas.width,
-        width : 0.05 * canvas.width,
-        height : 0.025 * canvas.height,
+        width : 0.025 * canvas.width,
+        height : 0.0125 * canvas.height,
         y : 0.9 * canvas.height,
         laserFrequency : 100,
         CanonFrequency : 200
@@ -64,18 +65,18 @@ function initRound(){
 // Remove the LET part here as it would reassign the variable instead of using the parameters if you did.
     bug = { 
         x : bug.x,
-        width : 0.01 * canvas.width,
-        height : 0.01 * canvas.height,
+        width : 0.02 * canvas.width,
+        height : 0.02 * canvas.height * aspectRatio,
         y : 0.1 * canvas.height,
         alive : true,
-        frequency : 250
+        frequency : 120
     }; 
 // Remove the LET part here as it would reassign the variable instead of using the parameters if you did. 
     bomb = {
         x : bug.x,
         y : bug.y,
-        width : 0.01 * canvas.width,
-        height : 0.15 * canvas.height,
+        width : 0.02 * canvas.width,
+        height : 0.02 * canvas.height * aspectRatio,
         spawned : false,
         bombFrequency : 500
     }; 
@@ -86,6 +87,7 @@ function drawStars(speed, size){
     let nearestBlock = windowYPos / canvas.height;
     let blockIndex = Math.floor(nearestBlock);
     let blockOffset = -(windowYPos % canvas.height);
+    drawStarBlock(blockIndex, blockOffset, size);
     drawStarBlock((blockIndex + 1), (blockOffset + canvas.height), size);
             return windowYPos;
 }
@@ -100,9 +102,16 @@ function drawStarBlock(blockIndex, blockOffset, size) {
         let y = Math.floor(chosenPixel / canvas.width);
         let x = chosenPixel % canvas.width;
         y = y + blockOffset;
-        ctx.fillRect(x, y, size, size);
+        ctx.fillStyle = 'white';
+        ctx.fillRect(x, canvas.height - y, size, size);
     }
 }
+
+let seed = 0;
+function srand(s) {
+            seed = s;
+}
+
 function rand() {
     seed = (seed * 16807) % 2147483647;
     return seed;
@@ -112,7 +121,7 @@ function bugSound(){
     let context = new (window.AudioContext || window.webkitAudioContext)();
     let oscillator = context.createOscillator();
     let now = context.currentTime;
-    oscillator.type = 'sine';
+    oscillator.type = 'sawtooth';
     oscillator.frequency.value = bug.frequency;
     oscillator.connect(context.destination);
     oscillator.start(now);
@@ -259,7 +268,7 @@ function drawLaser() {
 }
 //My attempt to do bug drop upon death and respawn
 function isBugHit() {    
-    if ((spacekeydown ==true) && ((canon.x >= bug.x) && (canon.x <= (bug.x + bug.width + 20)))){
+    if ((spacekeydown ==true) && ((canon.x >= bug.x) && (canon.x <= (bug.x + bug.width)))){
         return true;
     }  else {
         return false;
@@ -268,7 +277,7 @@ function isBugHit() {
 
 function bugDrop(){
     bug.y +=(0.03 * canvas.height);
-    bug.frequency = bug.frequency + 100;
+    bug.frequency = bug.frequency + 20;
 }
 
 function drawBug() {
@@ -283,22 +292,30 @@ function drawBug() {
         }
         
     }
+    let h = bug.height / 8;
+    let w = bug.width / 8;
+    let y = 0;
     ctx.fillStyle = 'white';
-    ctx.fillRect (bug.x, bug.y, bug.width, bug.height);  
-    ctx.fillRect (bug.x + 10, bug.y + 10, bug.width, bug.height);
-    ctx.fillRect (bug.x - 10, bug.y + 10, bug.width, bug.height);
-    ctx.fillRect (bug.x + 20, bug.y + 20, bug.width, bug.height);
-    ctx.fillRect (bug.x - 20, bug.y + 20, bug.width, bug.height);
-    ctx.fillRect (bug.x + 20, bug.y + 30, bug.width, bug.height);
-    ctx.fillRect (bug.x - 20, bug.y + 30, bug.width, bug.height);
-    ctx.fillRect (bug.x + 10, bug.y + 40, bug.width, bug.height);
-    ctx.fillRect (bug.x - 10, bug.y + 40, bug.width, bug.height);
-    ctx.fillRect (bug.x + 5, bug.y + 50, bug.width, bug.height);
-    ctx.fillRect (bug.x - 5, bug.y + 50, bug.width, bug.height);
-    ctx.fillRect (bug.x + 15, bug.y + 60, bug.width, bug.height);
-    ctx.fillRect (bug.x - 15, bug.y + 60, bug.width, bug.height);
-    ctx.fillRect (bug.x + 25, bug.y + 70, bug.width, bug.height);
-    ctx.fillRect (bug.x - 25, bug.y + 70, bug.width, bug.height);
+    ctx.fillRect (bug.x + (3 * w), bug.y, w * 2, h);  
+    y += h;
+
+    ctx.fillRect (bug.x + (2 * w), bug.y + y, w * 4, h);
+    y += h;
+    ctx.fillRect (bug.x + w, bug.y + y, (w * 6), h);
+    y += h;
+    ctx.fillRect (bug.x, bug.y + y, w * 2, h);
+    ctx.fillRect (bug.x + (3 * w), bug.y + y, (w * 2), h);
+    ctx.fillRect (bug.x + (6 * w), bug.y + y, (w * 2), h);
+    y += h;
+    ctx.fillRect (bug.x + w, bug.y + y, (w * 6), h);
+    y += h;
+    ctx.fillRect (bug.x + (2 * w), bug.y + y, w * 4, h);
+    y += h;
+    ctx.fillRect (bug.x + (2 * w), bug.y + y, w, h);
+    ctx.fillRect (bug.x + (5 * w), bug.y + y, w, h);
+    y += h;
+    ctx.fillRect (bug.x + w, bug.y + y, w, h);
+    ctx.fillRect (bug.x + (6 * w), bug.y + y, w, h);
 
 }
 // the math.random inside here needs to be a delay on when to drop the bomb not it's position. Does it only drop 1 bomb between succsefful hits? 
@@ -315,8 +332,28 @@ function drawBomb(){
                 }
 
              }
-        ctx.fillStyle = 'white';     
-        ctx.fillRect (bomb.x, bomb.y, bug.width, bug.height);
+        //ctx.fillRect (bomb.x, bomb.y, bug.width, bug.height);     
+    let h = bomb.height / 8;
+    let w = bomb.width / 8;
+    let y = 0;
+    ctx.fillStyle = 'white';
+    ctx.fillRect (bomb.x + (2 * w), bomb.y + y, w, h);  
+    ctx.fillRect (bomb.x + (5 * w), bomb.y + y, w, h);  
+    y += h;
+    ctx.fillRect (bomb.x + (2 * w), bomb.y + y, w, h);  
+    ctx.fillRect (bomb.x + (5 * w), bomb.y + y, w, h);  
+    y += h;
+    ctx.fillRect (bomb.x + (3 * w), bomb.y + y, (w * 2), h);
+    y += h;
+    ctx.fillRect (bomb.x + (3 * w), bomb.y + y, w * 2, h);
+    y += h;
+    ctx.fillRect (bomb.x + (2 * w), bomb.y + y, w * 4, h);
+    y += h;
+    ctx.fillRect (bomb.x + (2 * w), bomb.y + y, w * 4, h);
+    y += h;
+    ctx.fillRect (bomb.x + (2 * w), bomb.y + y, w * 4, h);
+    y += h;
+    ctx.fillRect (bomb.x + (3 * w), bomb.y + y, w * 2, h);
     }
 }
 
@@ -373,7 +410,8 @@ function playing() {
             
         } 
     }
-    drawStars();
+    drawStars(5, 3);
+ 
     drawBomb();
     drawScore();
     drawLives();
