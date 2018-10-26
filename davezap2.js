@@ -13,6 +13,7 @@ let spacewaslifted = false;
 let lives = 3;
 const canvas = document.getElementById ("canvas1"); 
 let ctx = canvas.getContext("2d");
+let windowYpos = 0;
 
 // The canon object with all it's parameters
 let canon = { 
@@ -20,7 +21,7 @@ let canon = {
      width : 0.05 * canvas.width,
      height : 0.025 * canvas.height,
      y : 0.9 * canvas.height,
-     laserFrequency : 200,
+     laserFrequency : 100,
      CanonFrequency : 200
 }; 
 // The bug object with all it's parameters
@@ -38,7 +39,7 @@ let bomb = {
     width : 0.01 * canvas.width,
     height : 0.15 * canvas.height,
     spawned : false,
-    bombFrequency : 200
+    bombFrequency : 80
 };
 
 // Initalisation paramenters to load in each gamestate set as a function to call later.
@@ -57,7 +58,7 @@ function initRound(){
         width : 0.05 * canvas.width,
         height : 0.025 * canvas.height,
         y : 0.9 * canvas.height,
-        laserFrequency : 1200,
+        laserFrequency : 100,
         CanonFrequency : 200
     }; 
 // Remove the LET part here as it would reassign the variable instead of using the parameters if you did.
@@ -76,9 +77,36 @@ function initRound(){
         width : 0.01 * canvas.width,
         height : 0.15 * canvas.height,
         spawned : false,
-        bombFrequency : 200
+        bombFrequency : 500
     }; 
 };
+
+function drawStars(speed, size){
+    windowYPos += speed;
+    let nearestBlock = windowYPos / canvas.height;
+    let blockIndex = Math.floor(nearestBlock);
+    let blockOffset = -(windowYPos % canvas.height);
+    drawStarBlock((blockIndex + 1), (blockOffset + canvas.height), size);
+            return windowYPos;
+}
+
+function drawStarBlock(blockIndex, blockOffset, size) {
+    srand(blockIndex);
+    let numStars = 16;
+    for(let i = 0; i < numStars; i++) {
+        let numCanvasPixels = (canvas.width * canvas.height);
+        let randomValue = rand();
+        let chosenPixel = randomValue % numCanvasPixels;
+        let y = Math.floor(chosenPixel / canvas.width);
+        let x = chosenPixel % canvas.width;
+        y = y + blockOffset;
+        ctx.fillRect(x, y, size, size);
+    }
+}
+function rand() {
+    seed = (seed * 16807) % 2147483647;
+    return seed;
+}
 
 function bugSound(){
     let context = new (window.AudioContext || window.webkitAudioContext)();
@@ -97,7 +125,7 @@ function laserSound (){
     let oscillator = context.createOscillator();
     let now = context.currentTime;
     oscillator.type = 'sawtooth';
-    oscillator.frequency.value = 400;
+    oscillator.frequency.value = canon.laserFrequency;
     oscillator.connect(context.destination);
     oscillator.start(now);
     oscillator.stop(now + 0.1);
@@ -109,7 +137,7 @@ function bombSound(){
     let oscillator = context.createOscillator();
     let now = context.currentTime;
     oscillator.type = 'sine';
-    oscillator.frequency.value = 1000;
+    oscillator.frequency.value = bomb.frequency;
     oscillator.connect(context.destination);
     oscillator.start(now);
     oscillator.stop(now + 0.1);
@@ -165,9 +193,10 @@ function cleanScreen() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
+
 // This fucntion loads all the text into the welcome screen.
 function welcomeText() {
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = 'black';
     ctx.font = '20pt calibri';
     ctx.textAlign = 'center';
     ctx.fillText("Welcome to Davezap!",canvas.width * 0.5, canvas.height * 0.2);
@@ -197,6 +226,7 @@ function drawScore() {
     if (gameState == 1){
     ctx.font = '20pt calibri';
     ctx.textAlign = 'left';
+    ctx.strokeStyle = 'black';
     ctx.fillText("Score",canvas.width * 0.01, canvas.height * 0.05);
     ctx.fillText ((score * 10).toFixed(0),canvas.width * 0.07,canvas.height * 0.05);
     }
@@ -226,7 +256,6 @@ function drawLaser() {
         ctx.strokeStyle = 'red';
         ctx.lineWidth = 3;
         ctx.stroke();   
-        laserSound();
 }
 //My attempt to do bug drop upon death and respawn
 function isBugHit() {    
@@ -248,6 +277,7 @@ function drawBug() {
         bugSound();
         if (Math.random() <0.7 && bomb.spawned == false)  {
             bomb.spawned = true;
+            bomb.frequency = bomb.frequency -50;
             bomb.x = bug.x;
             bomb.y = bug.y + bug.height;
         }
@@ -275,6 +305,7 @@ function drawBug() {
 function drawBomb(){
     if (bomb.spawned) {
         bomb.y = bomb.y + 8;
+        bomb.frequency = bomb.frequency -50;
         if (bomb.y > canvas.height){
             bomb.spawned = false;
         }
@@ -295,7 +326,6 @@ function welcome() {
         initGame();
     }
     welcomeText();
-    cleanScreen();
 }
 
 function killCanon() {
@@ -331,6 +361,7 @@ function playing() {
     drawCanon();
     if (spacekeydown == true && (framecount % 3) == 0){
         drawLaser(); 
+        laserSound();
         if (isBugHit()) {
             score = (score + ((bug.y / canvas.height) * 100));
             bug.y = 0.1 * canvas.height;
@@ -342,13 +373,14 @@ function playing() {
             
         } 
     }
+    drawStars();
     drawBomb();
     drawScore();
     drawLives();
 }
 
 function dead() {
-    cleanScreen();
+   // cleanScreen();
     if (spacekeydown == false) {
         spacewaslifted = true
     }
